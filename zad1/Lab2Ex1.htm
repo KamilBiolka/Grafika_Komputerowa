@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<title>CPSC 424, Lab 2, Exercise 1</title>
+<style>
+    body {
+        background-color: #DDDDDD;
+    }
+    canvas {
+        background-color: white;
+        display: block;
+    }
+    #canvasholder {
+        border: 2px solid black;
+        float: left;
+    }
+</style>
+<script>
+    "use strict"; 
+
+    var canvas;  
+    var graphics;  
+    
+    function draw() {
+        // Kolo
+        graphics.beginPath();
+        graphics.arc(300, 300, 200, 0, 360);
+        graphics.fillStyle = "rgb(252, 3, 28)";
+        graphics.strokeStyle = "rgb(0,0,0)";
+        graphics.lineWidth = 7;
+        graphics.stroke();
+        graphics.fill();
+
+        // Oczy
+        graphics.beginPath();
+        graphics.fillStyle = "rgb(255, 255, 255)";
+        graphics.arc(220, 230, 40, 0, 360);
+        graphics.arc(380, 230, 40, 0, 360);
+        graphics.fill();
+
+        graphics.beginPath();
+        graphics.fillStyle = "rgb(0, 0, 0)";
+        graphics.arc(220, 230, 25, 0, 360);
+        graphics.arc(380, 230, 25, 0, 360);
+        graphics.fill();
+
+        graphics.beginPath();
+        graphics.fillStyle = "rgb(255, 255, 255)";
+        graphics.arc(210, 225, 10, 0, 360);
+        graphics.arc(370, 225, 10, 0, 360);
+        graphics.fill();
+
+        // Usta
+        graphics.beginPath();
+        graphics.fillStyle = "rgb(0, 0, 0)";
+        graphics.moveTo(200, 370);
+        graphics.bezierCurveTo(260, 480, 360, 480, 420, 370);
+        graphics.bezierCurveTo(360, 420, 260, 420, 200, 370);
+        graphics.fill();
+
+        graphics.beginPath();
+        graphics.arc(185, 355, 27, -0.1 * Math.PI, 0.55 * Math.PI);
+        graphics.stroke();
+
+        graphics.beginPath();
+        graphics.arc(440, 360, 27, 0.5 * Math.PI, 1.1 * Math.PI);
+        graphics.stroke();
+
+        // Zeby
+        graphics.beginPath();
+        graphics.fillStyle = "rgb(255,255,255)";
+        graphics.rect(290, 410, 25, 25);
+        graphics.rect(310, 410, 25, 25);
+        graphics.fill();
+        
+        
+        graphics.lineWidth = 2;
+        graphics.beginPath();
+        graphics.moveTo(313, 410);
+        graphics.lineTo(313, 435);
+        graphics.stroke(); 
+        
+        graphics.beginPath();
+        graphics.moveTo(335, 410);  
+        graphics.lineTo(335, 435);
+        graphics.stroke(); 
+    }
+    
+    function init() {
+        try {
+            canvas = document.getElementById("canvas");
+            graphics = canvas.getContext("2d");
+        } catch(e) {
+            document.getElementById("canvasholder").innerHTML =
+               "Canvas graphics is not supported.<br>" +
+               "An error occurred while initializing graphics.";
+        }
+        draw();
+    }
+</script>
+</head>
+<body onload="init()"> 
+
+<h2>CS 424, Lab 2, Exercise 1</h2>
+
+<div id="canvasholder">
+<canvas id="canvas" width="600" height="600">
+    Canvas not supported.
+</canvas>
+</div>
+
+</body>
+</html>
