@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html>
+
+
+<head>
+<meta charset="UTF-8">
+<title>Unlit Cube Example</title>
+
+<script src="glsim.js"></script>  
+
+<script>
+
+let objectNumber = 1; 
+let rotateX = 15, rotateY = -15, rotateZ = 0;
+
+function korkociag(N) {
+    glColor3f(0, 1, 0); 
+    glBegin(GL_LINE_STRIP);
+    let h = 0.1, rMax = 0.5;
+    for (let i = 0; i <= N * 360; i += 10) {
+        let angle = i * Math.PI / 180;
+        let progress = i / (N * 360);
+        let r = rMax * progress; 
+        let x = r * Math.cos(angle);
+        let y = h * i / 360;
+        let z = r * Math.sin(angle);
+        glVertex3f(x, y, z);
+    }
+    glEnd();
+}
+
+function trojkat() {
+    glBegin(GL_TRIANGLE_FAN);
+    glColor3f(1, 1, 0); 
+    glVertex3f(0, 0, 1);
+    for (let i = 0; i <= 5; i++) {
+        let angle = i * 2 * Math.PI / 5;
+        glVertex3f(0.5 * Math.cos(angle), 0.5 * Math.sin(angle), 0); 
+    }
+    glEnd();
+}
+
+function piramida() {
+    glPushMatrix();
+    for (let i = 0; i < 5; i++) {
+        glRotatef(72, 0, 0, 1);
+        trojkat();
+    }
+    glPopMatrix();
+}
+
+function display() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    glRotatef(rotateZ, 0, 0, 1);
+    glRotatef(rotateY, 0, 1, 0);
+    glRotatef(rotateX, 1, 0, 0);
+    
+    if (objectNumber === 1) {
+        korkociag(5);
+    } else if (objectNumber === 2) {
+        piramida();
+    }
+}
+
+function doKeyDown(evt) {
+    let key = evt.keyCode;
+    if (key === 49) objectNumber = 1; 
+    else if (key === 50) objectNumber = 2; 
+    else if (key === 37) rotateY -= 15; 
+    else if (key === 39) rotateY += 15; 
+    else if (key === 38) rotateX -= 15; 
+    else if (key === 40) rotateX += 15; 
+    else if (key === 33) rotateZ += 15; 
+    else if (key === 34) rotateZ -= 15; 
+    else if (key === 36) rotateX = rotateY = rotateZ = 0; 
+    display();
+}
+
+function init() {
+    try {
+        glsimUse("glcanvas");
+    } catch (e) {
+        document.getElementById("canvas-holder").innerHTML = "Error: " + e;
+        return;
+    }
+    document.onkeydown = doKeyDown;
+    glEnable(GL_DEPTH_TEST);
+    display();
+}
+
+
+
+
+</script>
+
+</head>
+
+<body onload="init()">
+
+<h3>A Simple Unlit Cube in OpenGL 1.1</h3>
+
+<p>(Rotate using arrow keys, page up, page down, and home keys.)</p>
+
+<noscript>
+<p><b>Sorry, this page requires JavaScript!</b></p>
+</noscript>
+
+<div id="canvas-holder">
+<canvas id="glcanvas" width="500" height="500"></canvas>
+</div>
+
+</body>
+</html>
