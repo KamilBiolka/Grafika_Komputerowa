@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+ <style>
+	body 
+	{
+		margin-left: -200px;
+        margin-top: -100px;
+	}
+
+	canvas 
+	{
+    width: 100%;
+    height: 100%;
+	}
+</style> 
+<script src="https://cdn.jsdelivr.net/npm/three@0.115/build/three.js"></script>
+</head>
+<body>
+<script>
+let canvas = document.getElementById("glcanvas");
+
+const scene = new THREE.Scene({color: 0xfff});
+
+const camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 1, 1000);
+
+const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+document.body.appendChild(renderer.domElement);
+
+const light = new THREE.PointLight( 0xffffff, 1, 300 );
+light.position.set(-5, -0.5, 0.5);
+camera.add(light);
+scene.add(camera);
+
+const material = new THREE.MeshPhongMaterial(
+    {
+        color: 0x000000, 
+    });
+
+    let black_pawn = new THREE.Group();
+
+
+const base = new THREE.CylinderGeometry(0.6, 0.6, 0.15, 100);
+const baseMesh = new THREE.Mesh(base, material);
+baseMesh.position.y = 0.075;
+black_pawn.add(baseMesh);
+
+
+const baseMid = new THREE.CylinderGeometry(0.5, 0.6, 0.2, 100);
+const baseMidMesh = new THREE.Mesh(baseMid, material);
+baseMidMesh.position.y = 0.25;
+black_pawn.add(baseMidMesh);
+
+
+const body = new THREE.CylinderGeometry(0.25, 0.4, 1, 100);
+const bodyMesh = new THREE.Mesh(body, material);
+bodyMesh.position.y = 0.9;
+black_pawn.add(bodyMesh);
+
+
+const neck = new THREE.TorusGeometry(0.3, 0.05, 16, 100);
+const neckMesh = new THREE.Mesh(neck, material);
+neckMesh.rotation.x = Math.PI / 2;
+neckMesh.position.y = 1.45;
+black_pawn.add(neckMesh);
+
+
+const head = new THREE.SphereGeometry(0.4, 35, 35);
+const headMesh = new THREE.Mesh(head, material);
+headMesh.position.y = 1.8;
+black_pawn.add(headMesh);
+
+
+black_pawn.position.set(0, -1.5, 0);
+scene.add(black_pawn);
+
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+}
+
+camera.position.z = 4.5;
+
+animate();
+
+</script>
+</body>
+</html>
