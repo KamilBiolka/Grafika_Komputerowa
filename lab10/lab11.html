@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WebGL</title>
+  <style>
+    html, body { margin: 0; overflow: hidden; background: black; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<script type="x-shader/x-vertex" id="vshader">
+attribute vec2 a_coords;
+attribute vec3 color;
+uniform float u_width;
+uniform float u_height;
+uniform float u_pointSize;
+varying vec3 vColor;
+void main() {
+  float x = a_coords.x / u_width * 2.0 - 1.0;
+  float y = 1.0 - a_coords.y / u_height * 2.0;
+  gl_Position = vec4(x, y, 0.0, 1.0);
+  gl_PointSize = u_pointSize;
+  vColor = color;
+}
+</script>
+
+<script type="x-shader/x-fragment" id="fshader">
+precision mediump float;
+varying vec3 vColor;
+void main() {
+  gl_FragColor = vec4(vColor, 1.0);
+}
+</script>
+
+<script>
+"use strict";
+
+let canvas = document.getElementById("canvas");
+let gl = canvas.getContext("webgl");
+if (!gl) alert("WebGL not supported");
+
+let POINT_COUNT = 100;
+let POINT_SIZE = 12;
+let positions = new Float32Array(2 * POINT_COUNT);
+let velocities = new Float32Array(2 * POINT_COUNT);
+let colors = new Float32Array(3 * POINT_COUNT);
+let shapeMode = 1;
+let useColor = false;
+
+let program = createProgram(
+  document.getElementById("vshader").textContent,
+  document.getElementById("fshader").textContent
+);
+gl.useProgram(program);
+
+let a_coords = gl.getAttribLocation(program, "a_coords");
+let a_color = gl.getAttribLocation(program, "color");
+let u_width = gl.getUniformLocation(program, "u_width");
+let u_height = gl.getUniformLocation(program, "u_height");
+let u_pointSize = gl.getUniformLocation(program, "u_pointSize");
+
+let coordsBuffer = gl.createBuffer();
+let colorBuffer = gl.createBuffer();
+
+function createProgram(vsSource, fsSource) {
+  function loadShader(type, source) {
+    let shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw gl.getShaderInfoLog(shader);
+    }
+    return shader;
+  }
+  let vs = loadShader(gl.VERTEX_SHADER, vsSource);
+  let fs = loadShader(gl.FRAGMENT_SHADER, fsSource);
+  let prog = gl.createProgram();
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    throw gl.getProgramInfoLog(prog);
+  }
+  return prog;
+}
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.uniform1f(u_width, canvas.width);
+  gl.uniform1f(u_height, canvas.height);
+}
+window.addEventListener("resize", resize);
+resize();
+
+function initPoints() {
+  for (let i = 0; i < POINT_COUNT; i++) {
+    positions[2 * i] = canvas.width / 2;
+    positions[2 * i + 1] = canvas.height / 2;
+    let angle = Math.random() * 2 * Math.PI;
+    let speed = 1.5 + Math.random() * 3;
+    velocities[2 * i] = Math.cos(angle) * speed;
+    velocities[2 * i + 1] = Math.sin(angle) * speed;
+
+    colors[3 * i] = 1.0; 
+    colors[3 * i + 1] = 0.0;
+    colors[3 * i + 2] = 0.0;
+  }
+}
+initPoints();
+
+function updatePoints() {
+  for (let i = 0; i < POINT_COUNT; i++) {
+    positions[2 * i] += velocities[2 * i];
+    positions[2 * i + 1] += velocities[2 * i + 1];
+
+    if (positions[2 * i] < 0 || positions[2 * i] > canvas.width)
+      velocities[2 * i] *= -1;
+    if (positions[2 * i + 1] < 0 || positions[2 * i + 1] > canvas.height)
+      velocities[2 * i + 1] *= -1;
+  }
+}
+
+function drawPoints(points, colors, size) {
+  gl.uniform1f(u_pointSize, size);
+  gl.bindBuffer(gl.ARRAY_BUFFER, coordsBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, points, gl.STREAM_DRAW);
+  gl.vertexAttribPointer(a_coords, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_coords);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STREAM_DRAW);
+  gl.vertexAttribPointer(a_color, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_color);
+
+  gl.drawArrays(gl.POINTS, 0, points.length / 2);
+}
+
+function drawFilledPolygon(vertices, colorData) {
+  gl.uniform1f(u_pointSize, 1);
+  gl.bindBuffer(gl.ARRAY_BUFFER, coordsBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STREAM_DRAW);
+  gl.vertexAttribPointer(a_coords, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_coords);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, colorData, gl.STREAM_DRAW);
+  gl.vertexAttribPointer(a_color, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_color);
+
+  gl.drawArrays(gl.TRIANGLE_FAN, 0, vertices.length / 2);
+}
+
+function drawLines(points) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, coordsBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, points, gl.STREAM_DRAW);
+  gl.vertexAttribPointer(a_coords, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_coords);
+
+  gl.disableVertexAttribArray(a_color);
+  gl.vertexAttrib3f(a_color, 1.0, 1.0, 1.0);
+  gl.drawArrays(gl.LINE_LOOP, 0, points.length / 2);
+}
+
+function render() {
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  updatePoints();
+
+  if (shapeMode === 1) {
+    drawPoints(positions, colors, POINT_SIZE);
+} else if (shapeMode === 2) {
+  for (let i = 0; i < POINT_COUNT; i++) {
+    let cx = positions[2 * i];
+    let cy = positions[2 * i + 1];
+    let sides = 5;
+    let radius = 30;
+    let poly = new Float32Array(2 * (sides + 2));
+    let col = new Float32Array(3 * (sides + 2));
+
+    poly[0] = cx;
+    poly[1] = cy;
+
+    
+    let r = 0.0;
+    let g = 0.4;
+    let b = 1.0;
+
+    col[0] = r;
+    col[1] = g;
+    col[2] = b;
+
+    for (let j = 0; j <= sides; j++) {
+      let angle = j * 2 * Math.PI / sides;
+      poly[2 * (j + 1)] = cx + radius * Math.cos(angle);
+      poly[2 * (j + 1) + 1] = cy + radius * Math.sin(angle);
+
+      col[3 * (j + 1)] = r;
+      col[3 * (j + 1) + 1] = g;
+      col[3 * (j + 1) + 2] = b;
+    }
+
+    drawFilledPolygon(poly, col);
+  }
+  } else if (shapeMode === 3) {
+    for (let i = 0; i < POINT_COUNT; i++) {
+      let cx = positions[2 * i];
+      let cy = positions[2 * i + 1];
+      let radius = 80;
+      let sides = 5;
+      let poly = new Float32Array(2 * sides);
+      let col = new Float32Array(3 * sides);
+      for (let j = 0; j < sides; j++) {
+        let angle = j * 2 * Math.PI / sides;
+        poly[2 * j] = cx + radius * Math.cos(angle);
+        poly[2 * j + 1] = cy + radius * Math.sin(angle);
+
+        col[3 * j] = colors[3 * i];
+        col[3 * j + 1] = colors[3 * i + 1];
+        col[3 * j + 2] = colors[3 * i + 2];
+      }
+      drawLines(poly);
+      drawPoints(poly, col, 5);
+    }
+  }
+
+  requestAnimationFrame(render);
+}
+render();
+
+window.addEventListener("keydown", e => {
+  if (e.key === "1") {
+    shapeMode = 1;
+    useColor = true;
+    for (let i = 0; i < POINT_COUNT; i++) {
+      colors[3 * i] = Math.random();
+      colors[3 * i + 1] = Math.random();
+      colors[3 * i + 2] = Math.random();
+    }
+  }
+  if (e.key === "2") shapeMode = 2;
+  if (e.key === "3") shapeMode = 3;
+});
+</script>
+</body>
+</html>
